@@ -44,8 +44,10 @@ la línea LTS más reciente; con ella se probó la plantilla.
 - **macOS**: lo mismo, con `nvm`. El guion de la frontera funciona con el bash que trae el sistema
   (`/bin/bash`, la versión 3.2), y el CI lo comprueba en una Mac.
 - **Si ya tienes `nvm`**: `nvm install 26`.
-- **Con Node 24 o 25** la plantilla también corrió (medido con 24.22.0 y 25.2.1), pero `npm ci` avisa
-  `npm warn EBADENGINE`: no es la versión que `package.json` declara.
+- **¿Vienes del [curso de TypeScript](https://www.habil.mx/es/cursos/typescript/) con Node 24?** La
+  plantilla corre (medido con 24.22.0 y 25.2.1), pero `npm ci` avisa `npm warn EBADENGINE`: no es la
+  versión que `package.json` declara. Instala la 26 junto a la que ya tienes con `nvm install 26`; para
+  volver a la 24 en otra terminal, `nvm use 24`.
 - **Windows**: usa WSL; el guion de la frontera pide `bash`.
 
 **1. Instala las dependencias**, exactamente las de `package-lock.json`:
