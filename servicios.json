@@ -1,0 +1,5 @@
+[
+  { "nombre": "nodejs.org", "url": "https://nodejs.org/en", "timeoutMs": 5000 },
+  { "nombre": "typescriptlang.org", "url": "https://www.typescriptlang.org/", "timeoutMs": 5000 },
+  { "nombre": "no-existe", "url": "http://servicio-que-no-existe.invalid" }
+]

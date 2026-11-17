@@ -1,0 +1,99 @@
+name: Verificar la plantilla
+
+# Se corre en cada cambio, a mano cuando se quiera, y una vez por semana: una
+# versión nueva de Node puede romper la plantilla sin que nadie haya tocado
+# nada, y es mejor enterarse por este rojo que por el primer lector que la
+# clone.
+# ⚠️ En un repositorio público, GitHub apaga solo la corrida programada si el
+# repositorio pasa 60 días sin actividad; hay que volver a encenderla a mano.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 13 * * 1" # lunes 13:17 UTC (7:17 en la Ciudad de México)
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # lts/*: la LTS más reciente. 26.13.0: la que declara "engines" en
+          # package.json (la primera LTS de la línea 26). Si algún día la
+          # plantilla usa algo que esa versión no trae, este rojo avisa que
+          # "engines" ya miente.
+          - { os: ubuntu-latest, node: "lts/*" }
+          - { os: ubuntu-latest, node: "26.13.0" }
+          # macOS: la frontera se corre con el bash que trae el sistema (el
+          # 3.2), que es el que tiene quien clona en una Mac sin Homebrew.
+          - { os: macos-latest, node: "lts/*" }
+    name: Node ${{ matrix.node }} · ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          check-latest: true
+
+      - name: Versiones
+        run: |
+          node --version
+          npm --version
+
+      # npm ci instala exactamente lo que dice package-lock.json. Si el archivo
+      # falta o no concuerda con package.json, este paso falla en vez de
+      # resolver otras versiones por su cuenta.
+      - name: Dependencias, las de package-lock.json
+        run: npm ci
+
+      # Construye dist/ y revisa los tipos de las pruebas contra lo construido.
+      - name: Tipos del código y de las pruebas
+        run: npm run check
+
+      # dist/ es lo que se entrega: no debe llevar ni una prueba.
+      - name: dist/ no lleva pruebas
+        shell: bash
+        run: |
+          ls dist
+          if find dist -name '*.test.*' | grep -q .; then
+            echo "❌ hay pruebas dentro de dist/"
+            exit 1
+          fi
+
+      # El conteo se lee del informe, no del código de salida: con un patrón
+      # que no encuentra ningún archivo, «node --test» sale 0 con «tests 0». Y
+      # una prueba que se acaba el tiempo cuenta como «cancelled», no «fail».
+      - name: Pruebas (el conteo se lee del informe)
+        shell: bash
+        run: |
+          npm test 2>&1 | tee pruebas.log
+          grep -E '^ℹ pass [1-9][0-9]*$' pruebas.log
+          grep -E '^ℹ fail 0$' pruebas.log
+          grep -E '^ℹ cancelled 0$' pruebas.log
+
+      # La frontera que sabe fallar: un alias declarado solo en tsconfig.json
+      # TIENE que compilar y TIENE que no arrancar, por la razón exacta
+      # (ERR_MODULE_NOT_FOUND). Si alguna vez arranca, este paso se pone rojo.
+      # Se llama con bash para no depender de que el archivo conserve su
+      # permiso de ejecución.
+      - name: Frontera (lo que solo declara tsconfig.json, Node no lo ve)
+        if: runner.os == 'Linux'
+        run: bash herramientas/probar-frontera.sh
+
+      # En macOS, con /bin/bash explícito y en UTF-8: ese bash 3.2 lee mal una
+      # variable pegada a una letra con acento o a una comilla «», y un guion
+      # que se corta a la mitad puede salir con 0. Esta fila lo vigila.
+      - name: Frontera con el bash de macOS (/bin/bash 3.2)
+        if: runner.os == 'macOS'
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        run: |
+          /bin/bash --version | head -n 1
+          /bin/bash herramientas/probar-frontera.sh

@@ -1,0 +1,28 @@
+{
+  "name": "revisor",
+  "version": "0.1.0",
+  "description": "Revisa si una lista de servicios responde por HTTP. La semilla de la plantilla estructura-typescript.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=26.13.0"
+  },
+  "imports": {
+    "#config": "./dist/config.js",
+    "#reporte": "./dist/reporte.js",
+    "#revisar": "./dist/revisar.js",
+    "#servicio": "./dist/servicio.js"
+  },
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "npm run clean && tsc -p tsconfig.build.json",
+    "check": "npm run build && tsc -p test",
+    "test": "npm run check && node --test \"test/**/*.test.ts\"",
+    "start": "node dist/main.js"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "typescript": "7.0.2"
+  }
+}

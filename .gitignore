@@ -1,0 +1,10 @@
+# Lo que instala npm: se rehace en cada máquina con «npm ci», nunca se sube.
+node_modules/
+
+# Lo que deja tsc al compilar: se rehace con «npm run build», nunca se sube.
+dist/
+
+# Editores y sistema operativo.
+.idea/
+.vscode/
+.DS_Store
